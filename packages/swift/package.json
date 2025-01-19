@@ -1,0 +1,19 @@
+{
+  "name": "swift",
+  "version": "1.0.0",
+  "description": "A demo module that exposes Swift code to Electron",
+  "main": "js/index.js",
+  "scripts": {
+    "clean": "rm -rf build_swift && rm -rf build",
+    "build": "npm run build-swift && npm run build-c",
+    "build-c": "node-gyp rebuild --target=$(electron -v | sed 's/v//') --dist-url=https://electronjs.org/headers",
+    "build-swift": "chmod +x ./build-swift.sh && ./build-swift.sh",
+    "start": "electron .",
+    "test": "npm run build-electron && electron test/electron.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "node-addon-api": "^8.3.0"
+  }
+}

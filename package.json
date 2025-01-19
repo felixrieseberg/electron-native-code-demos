@@ -1,0 +1,22 @@
+{
+  "name": "electron-native-code-demos",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "workspaces": [
+    "packages/swift"
+  ],
+  "directories": {
+    "test": "test"
+  },
+  "devDependencies": {
+    "electron": "^34.0.0",
+    "electron-rebuild": "^3.2.9"
+  },
+  "scripts": {
+    "build": "npm run build --workspaces",
+    "electron": "electron test/electron.js"
+  },
+  "author": "Felix Rieseberg <felix@felixrieseberg.com>",
+  "license": "MIT"
+}
