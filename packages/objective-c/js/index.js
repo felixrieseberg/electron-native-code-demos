@@ -1,10 +1,10 @@
 const EventEmitter = require('events');
-const addon = require('../build/Release/swift_addon');
+const addon = require('../build/Release/objectivec_addon');
 
-class SwiftAddon extends EventEmitter {
+class ObjectiveCAddon extends EventEmitter {
     constructor() {
         super();
-        this.addon = new addon.SwiftAddon();
+        this.addon = new addon.ObjectiveCAddon();
 
         this.addon.on('todoAdded', (payload) => {
             this.emit('todoAdded', this.#parse(payload));
@@ -34,4 +34,4 @@ class SwiftAddon extends EventEmitter {
     }
 }
 
-module.exports = new SwiftAddon();
+module.exports = new ObjectiveCAddon();

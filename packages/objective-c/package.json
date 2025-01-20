@@ -1,7 +1,7 @@
 {
-  "name": "swift",
+  "name": "objective-c",
   "version": "1.0.0",
-  "description": "A demo module that exposes Swift code to Electron",
+  "description": "A demo module that exposes Objective-C code to Electron",
   "main": "js/index.js",
   "author": "Felix Rieseberg <felix@felixrieseberg.com>",
   "scripts": {

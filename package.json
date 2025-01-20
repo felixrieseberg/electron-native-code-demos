@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "workspaces": [
-    "packages/swift"
+    "packages/swift",
+    "packages/objective-c"
   ],
   "directories": {
     "test": "test"
@@ -15,6 +16,7 @@
   },
   "scripts": {
     "build": "npm run build --workspaces",
+    "clean": "npm run clean --workspaces",
     "electron": "electron test/electron.js"
   },
   "author": "Felix Rieseberg <felix@felixrieseberg.com>",

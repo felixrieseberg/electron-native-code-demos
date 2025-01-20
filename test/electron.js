@@ -1,13 +1,14 @@
-const { app, ipcMain, BrowserWindow } = require('electron');
+const { app, BrowserWindow } = require('electron');
 const path = require('path');
-const swift = require('swift');
+
+const { setupNativeListeners } = require('./native-listeners');
 
 let win;
 
 function createWindow() {
   win = new BrowserWindow({
-    width: 300,
-    height: 200,
+    width: 600,
+    height: 400,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js')
     }
@@ -31,26 +32,8 @@ app.on('activate', () => {
 
 async function main() {
   createWindow();
-  setupSwiftListeners();
+  setupNativeListeners();
 }
-
-function setupSwiftListeners() {
-  swift.on('todoAdded', (todo) => {
-    console.log('Todo added:', todo);
-  });
-
-  swift.on('todoUpdated', (todo) => {
-    console.log('Todo updated:', todo);
-  });
-
-  swift.on('todoDeleted', (todoId) => {
-    console.log('Todo deleted:', todoId);
-  });
-}
-
-ipcMain.on('helloGui', () => {
-  swift.helloGui();
-});
 
 app.whenReady().then(main);
 

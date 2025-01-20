@@ -1,28 +1,51 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-    <title>SwiftUI Demo</title>
+    <title>Native Demo</title>
     <style>
         body {
             display: flex;
-            justify-content: center;
-            align-items: center;
+            justify-content: flex-start;
+            align-items: flex-start;
+            flex-direction: column;
             height: 100vh;
-            margin: 0;
+            margin: 0 20px;
             font-family: -apple-system, system-ui, BlinkMacSystemFont;
         }
+
         button {
-            padding: 10px 20px;
+            margin: 10px;
+            padding: 5px 20px;
             font-size: 16px;
+        }
+
+        .native-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
         }
     </style>
 </head>
+
 <body>
-    <button onclick="showSwiftUI()">Show SwiftUI Window</button>
-    <script>
-        function showSwiftUI() {
-          swift.helloGui();
-        }
-    </script>
+    <div>
+        <h2>Show Native Windows</h2>
+        <div class="native-buttons">
+            <div>
+                <h4>macOS</h4>
+                <button data-platform="darwin" onclick="native.swift.helloGui()">SwiftUI</button>
+                <button data-platform="darwin" onclick="native['objective-c'].helloGui()">Objective-C</button>
+            </div>
+            <div>
+                <h4>Windows</h4>
+                <button data-platform="win32" onclick="native.swift.helloGui()">C++</button>
+            </div>
+            <div>
+                <h4>Linux</h4>
+                <button data-platform="linux" onclick="native.swift.helloGui()">C++</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
