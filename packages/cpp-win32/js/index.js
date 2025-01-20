@@ -1,15 +1,16 @@
 const EventEmitter = require('events');
 
-class ObjectiveCAddon extends EventEmitter {
+class CppWin32Addon extends EventEmitter {
     constructor() {
         super();
 
-        if (process.platform !== 'darwin') {
-          throw new Error('This module is only available on macOS');
+        if (process.platform !== 'win32') {
+          throw new Error('This module is only available on Windows');
         }
-
-        const native = require('../build/Release/objectivec_addon');
-        this.addon = new native.ObjectiveCAddon();
+  
+        const native = require('../build/Release/cpp_addon');
+        console.log(native);
+        this.addon = new native.CppWin32Addon();
 
         this.addon.on('todoAdded', (payload) => {
             this.emit('todoAdded', this.#parse(payload));
@@ -39,9 +40,8 @@ class ObjectiveCAddon extends EventEmitter {
     }
 }
 
-if (process.platform === 'darwin') {
-  module.exports = new ObjectiveCAddon();
+if (process.platform === 'win32') {
+  module.exports = new CppWin32Addon();
 } else {
   module.exports = {};
 }
-

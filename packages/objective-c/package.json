@@ -6,7 +6,8 @@
   "author": "Felix Rieseberg <felix@felixrieseberg.com>",
   "scripts": {
     "clean": "rm -rf build_swift && rm -rf build",
-    "build": "node-gyp rebuild --target=$(electron -v | sed 's/v//') --dist-url=https://electronjs.org/headers"
+    "build-electron": "electron-rebuild",
+    "build": "node-gyp configure && node-gyp build"
   },
   "license": "MIT",
   "dependencies": {

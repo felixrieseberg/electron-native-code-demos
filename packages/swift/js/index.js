@@ -1,10 +1,15 @@
 const EventEmitter = require('events');
-const addon = require('../build/Release/swift_addon');
 
 class SwiftAddon extends EventEmitter {
     constructor() {
         super();
-        this.addon = new addon.SwiftAddon();
+
+        if (process.platform !== 'darwin') {
+          throw new Error('This module is only available on macOS');
+        }
+  
+        const native = require('../build/Release/swift_addon');
+        this.addon = new native.SwiftAddon();
 
         this.addon.on('todoAdded', (payload) => {
             this.emit('todoAdded', this.#parse(payload));
@@ -34,4 +39,8 @@ class SwiftAddon extends EventEmitter {
     }
 }
 
-module.exports = new SwiftAddon();
+if (process.platform === 'darwin') {
+  module.exports = new SwiftAddon();
+} else {
+  module.exports = {};
+}

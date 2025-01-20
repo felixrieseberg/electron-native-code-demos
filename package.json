@@ -5,17 +5,18 @@
   "main": "index.js",
   "workspaces": [
     "packages/swift",
-    "packages/objective-c"
+    "packages/objective-c",
+    "packages/cpp-win32"
   ],
   "directories": {
     "test": "test"
   },
   "devDependencies": {
-    "electron": "^34.0.0",
-    "electron-rebuild": "^3.2.9"
+    "@electron/rebuild": "^3.7.1",
+    "electron": "^34.0.0"
   },
   "scripts": {
-    "build": "npm run build --workspaces",
+    "build": "npm run build --workspaces && npm run build-electron --workspaces",
     "clean": "npm run clean --workspaces",
     "electron": "electron test/electron.js"
   },

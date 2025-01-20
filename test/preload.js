@@ -17,6 +17,14 @@ contextBridge.exposeInMainWorld('native', {
       ipcRenderer.send('objective-c-hello-gui');
     }
   },
+  cppWin32: {
+    helloWorld: (input) => {
+      ipcRenderer.send('cpp-win32-hello-world', input);
+    },
+    helloGui: () => {
+      ipcRenderer.send('cpp-win32-hello-gui');
+    }
+  },
   platform: process.platform
 });
 
