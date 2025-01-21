@@ -71,6 +71,24 @@ public:
             Napi::Error::New(env_, "Failed to create threadsafe function").ThrowAsJavaScriptException();
             return;
         }
+
+        // Set up the callbacks here
+        auto makeCallback = [this](const std::string& eventType) {
+            return [this, eventType](const std::string& payload) {
+                if (tsfn_ != nullptr) {
+                    auto* data = new CallbackData{
+                        eventType,
+                        payload,
+                        this
+                    };
+                    napi_call_threadsafe_function(tsfn_, data, napi_tsfn_blocking);
+                }
+            };
+        };
+
+        cpp_code::setTodoAddedCallback(makeCallback("todoAdded"));
+        cpp_code::setTodoUpdatedCallback(makeCallback("todoUpdated"));
+        cpp_code::setTodoDeletedCallback(makeCallback("todoDeleted"));
     }
 
     ~CppAddon() {
