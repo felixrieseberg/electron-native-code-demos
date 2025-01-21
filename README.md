@@ -4,6 +4,7 @@
   <img src="assets/macos-swift.jpg" width="200" />
   <img src="assets/macos-objective-c.jpg" width="200" />
   <img src="assets/linux-gtk.jpg" width="200" />
+  <img src="assets/windows-win32.jpg" width="200" />
 </p>
 
 This repository demonstrates how you can integrate native code and even native UI elements into your Electron application. It's meant as both a tutorial and as a starting point for you own development. All packages implement:
