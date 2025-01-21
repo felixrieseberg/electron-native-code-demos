@@ -1,6 +1,6 @@
 const { ipcMain } = require('electron');
 
-const languages = ['swift', 'objective-c', 'cpp-win32'];
+const languages = ['swift', 'objective-c', 'cpp-win32', 'cpp-linux'];
 
 // Require the addons available on the current platform.
 const addons = {
@@ -15,7 +15,7 @@ function setupNativeListeners() {
     // Only handle the addons that are available for the current platform.
     if (!addons[language]) continue;
 
-    ipcMain.handle(`${language}-hello-world`, (event, input) => {
+    ipcMain.handle(`${language}-hello-world`, (_event, input) => {
       const result = addons[language].helloWorld(input);
       console.log(`${language} helloWorld() called:`, result);
       return result;
@@ -28,15 +28,15 @@ function setupNativeListeners() {
     // Setup the JavaScript listeners. This is simply a demo to
     // show that you can get data back from the native code.
     addons[language].on('todoAdded', (todo) => {
-        console.log(`${language} todo added:`, todo);
+      console.log(`${language} todo added:`, todo);
     });
 
     addons[language].on('todoUpdated', (todo) => {
-        console.log(`${language} todo updated:`, todo);
+      console.log(`${language} todo updated:`, todo);
     });
 
     addons[language].on('todoDeleted', (todoId) => {
-        console.log(`${language} todo deleted:`, todoId);
+      console.log(`${language} todo deleted:`, todoId);
     });
   }
 }

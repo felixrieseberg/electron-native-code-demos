@@ -5,7 +5,7 @@
 class CppAddon : public Napi::ObjectWrap<CppAddon> {
 public:
     static Napi::Object Init(Napi::Env env, Napi::Object exports) {
-        Napi::Function func = DefineClass(env, "CppWin32Addon", {
+        Napi::Function func = DefineClass(env, "CppLinuxAddon", {
             InstanceMethod("helloWorld", &CppAddon::HelloWorld),
             InstanceMethod("helloGui", &CppAddon::HelloGui),
             InstanceMethod("on", &CppAddon::On)
@@ -15,7 +15,7 @@ public:
         *constructor = Napi::Persistent(func);
         env.SetInstanceData(constructor);
 
-        exports.Set("CppWin32Addon", func);
+        exports.Set("CppLinuxAddon", func);
         return exports;
     }
 

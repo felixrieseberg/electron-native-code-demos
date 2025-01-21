@@ -11,23 +11,22 @@
           "include_dirs": [
             "<!@(node -p \"require('node-addon-api').include\")",
             "include",
-            "<!@(pkg-config --cflags-only-I gtk4 | sed s/-I//g)"
+            "<!@(pkg-config --cflags-only-I gtk+-3.0 | sed s/-I//g)"
           ],
           "cflags!": ["-fno-exceptions"],
           "cflags_cc!": ["-fno-exceptions"],
           "cflags": [
             "-fexceptions",
-            "<!@(pkg-config --cflags gtk4)"
+            "<!@(pkg-config --cflags gtk+-3.0)"
           ],
           "cflags_cc": [
             "-fexceptions",
-            "<!@(pkg-config --cflags gtk4)"
+            "<!@(pkg-config --cflags gtk+-3.0)"
           ],
           "defines": ["NODE_ADDON_API_CPP_EXCEPTIONS"],
           "libraries": [
-            "<!@(pkg-config --libs gtk4)",
-            "-luuid",
-            "-lvulkan"
+            "<!@(pkg-config --libs gtk+-3.0)",
+            "-luuid"
           ],
           "dependencies": [
             "<!(node -p \"require('node-addon-api').gyp\")"
