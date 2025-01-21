@@ -5,21 +5,19 @@
 #include <vector>
 #include <uuid/uuid.h>
 #include <ctime>
+#include <thread>
+#include <memory>
 
 using TodoCallback = std::function<void(const std::string&)>;
 
-static TodoCallback g_todoAddedCallback;
-static TodoCallback g_todoUpdatedCallback;
-static TodoCallback g_todoDeletedCallback;
+namespace cpp_code {
 
-// Helper function to get current time in milliseconds since epoch
-int64_t getCurrentTimeMillis() {
-    auto now = std::chrono::system_clock::now();
-    return std::chrono::duration_cast<std::chrono::milliseconds>(
-        now.time_since_epoch()
-    ).count();
+// Basic functions
+std::string hello_world(const std::string& name) {
+    return "Hello " + name + " from C++!";
 }
 
+// Data structures
 struct TodoItem {
     uuid_t id;
     std::string text;
@@ -28,135 +26,143 @@ struct TodoItem {
     std::string toJson() const {
         char uuid_str[37];
         uuid_unparse(id, uuid_str);
-
         return "{"
                "\"id\":\"" + std::string(uuid_str) + "\","
                "\"text\":\"" + text + "\","
                "\"date\":" + std::to_string(date) +
                "}";
     }
+
+    static std::string formatDate(int64_t timestamp) {
+        char date_str[64];
+        time_t unix_time = timestamp / 1000;
+        strftime(date_str, sizeof(date_str), "%Y-%m-%d", localtime(&unix_time));
+        return date_str;
+    }
 };
 
-// Global vector to store todos
-static std::vector<TodoItem> g_todos;
+// Forward declarations
+static void update_todo_row_label(GtkListBoxRow* row, const TodoItem& todo);
+static GtkWidget* create_todo_dialog(GtkWindow* parent, const TodoItem* existing_todo);
 
-namespace cpp_code {
-
-void setTodoAddedCallback(TodoCallback callback) {
-    g_todoAddedCallback = callback;
+// Global state
+namespace {
+    TodoCallback g_todoAddedCallback;
+    TodoCallback g_todoUpdatedCallback;
+    TodoCallback g_todoDeletedCallback;
+    GMainContext* g_gtk_main_context = nullptr;
+    GMainLoop* g_main_loop = nullptr;
+    std::thread* g_gtk_thread = nullptr;
+    std::vector<TodoItem> g_todos;
 }
 
-void setTodoUpdatedCallback(TodoCallback callback) {
-    g_todoUpdatedCallback = callback;
-}
-
-void setTodoDeletedCallback(TodoCallback callback) {
-    g_todoDeletedCallback = callback;
-}
-
+// Helper functions
 static void notify_callback(const TodoCallback& callback, const std::string& json) {
-    if (callback) {
-        callback(json);
-        // Process any pending GTK events
-        while (g_main_context_pending(NULL)) {
-            g_main_context_iteration(NULL, TRUE);
-        }
+    if (callback && g_gtk_main_context) {
+        g_main_context_invoke(g_gtk_main_context, [](gpointer data) -> gboolean {
+            auto* cb_data = static_cast<std::pair<TodoCallback, std::string>*>(data);
+            cb_data->first(cb_data->second);
+            delete cb_data;
+            return G_SOURCE_REMOVE;
+        }, new std::pair<TodoCallback, std::string>(callback, json));
     }
+}
+
+static void update_todo_row_label(GtkListBoxRow* row, const TodoItem& todo) {
+    auto* label = gtk_label_new((todo.text + " - " + TodoItem::formatDate(todo.date)).c_str());
+    auto* old_label = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(row))->data);
+    gtk_container_remove(GTK_CONTAINER(row), old_label);
+    gtk_container_add(GTK_CONTAINER(row), label);
+    gtk_widget_show_all(GTK_WIDGET(row));
+}
+
+static GtkWidget* create_todo_dialog(GtkWindow* parent, const TodoItem* existing_todo = nullptr) {
+    auto* dialog = gtk_dialog_new_with_buttons(
+        existing_todo ? "Edit Todo" : "Add Todo",
+        parent,
+        GTK_DIALOG_MODAL,
+        "_Cancel", GTK_RESPONSE_CANCEL,
+        "_Save", GTK_RESPONSE_ACCEPT,
+        nullptr
+    );
+
+    auto* content_area = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+    gtk_container_set_border_width(GTK_CONTAINER(content_area), 10);
+
+    auto* entry = gtk_entry_new();
+    if (existing_todo) {
+        gtk_entry_set_text(GTK_ENTRY(entry), existing_todo->text.c_str());
+    }
+    gtk_container_add(GTK_CONTAINER(content_area), entry);
+
+    auto* calendar = gtk_calendar_new();
+    if (existing_todo) {
+        time_t unix_time = existing_todo->date / 1000;
+        struct tm* timeinfo = localtime(&unix_time);
+        gtk_calendar_select_month(GTK_CALENDAR(calendar), timeinfo->tm_mon, timeinfo->tm_year + 1900);
+        gtk_calendar_select_day(GTK_CALENDAR(calendar), timeinfo->tm_mday);
+    }
+    gtk_container_add(GTK_CONTAINER(content_area), calendar);
+
+    gtk_widget_show_all(dialog);
+    return dialog;
 }
 
 static void edit_action(GSimpleAction* action, GVariant* parameter, gpointer user_data) {
     auto* builder = static_cast<GtkBuilder*>(user_data);
     auto* list = GTK_LIST_BOX(gtk_builder_get_object(builder, "todo_list"));
     auto* row = gtk_list_box_get_selected_row(list);
-    if (row) {
-        int index = gtk_list_box_row_get_index(row);
-        if (index >= 0 && index < g_todos.size()) {
-            // Create dialog
-            auto* dialog = gtk_dialog_new_with_buttons(
-                "Edit Todo",
-                GTK_WINDOW(gtk_builder_get_object(builder, "window")),
-                GTK_DIALOG_MODAL,
-                "_Cancel",
-                GTK_RESPONSE_CANCEL,
-                "_Save",
-                GTK_RESPONSE_ACCEPT,
-                NULL
-            );
+    if (!row) return;
 
-            // Create content area
-            auto* content_area = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
-            gtk_container_set_border_width(GTK_CONTAINER(content_area), 10);
+    gint index = gtk_list_box_row_get_index(row);
+    auto size = static_cast<gint>(g_todos.size());
+    if (index < 0 || index >= size) return;
 
-            // Create entry with current todo text
-            auto* entry = gtk_entry_new();
-            gtk_entry_set_text(GTK_ENTRY(entry), g_todos[index].text.c_str());
-            gtk_container_add(GTK_CONTAINER(content_area), entry);
+    auto* dialog = create_todo_dialog(
+        GTK_WINDOW(gtk_builder_get_object(builder, "window")),
+        &g_todos[index]
+    );
 
-            // Create calendar with current date
-            auto* calendar = gtk_calendar_new();
-            time_t unix_time = g_todos[index].date / 1000;
-            struct tm* timeinfo = localtime(&unix_time);
-            gtk_calendar_select_month(GTK_CALENDAR(calendar), timeinfo->tm_mon, timeinfo->tm_year + 1900);
-            gtk_calendar_select_day(GTK_CALENDAR(calendar), timeinfo->tm_mday);
-            gtk_container_add(GTK_CONTAINER(content_area), calendar);
+    if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
+        auto* entry = GTK_ENTRY(gtk_container_get_children(
+            GTK_CONTAINER(gtk_dialog_get_content_area(GTK_DIALOG(dialog)))
+        )->data);
+        auto* calendar = GTK_CALENDAR(gtk_container_get_children(
+            GTK_CONTAINER(gtk_dialog_get_content_area(GTK_DIALOG(dialog)))
+        )->next->data);
 
-            gtk_widget_show_all(dialog);
+        const char* new_text = gtk_entry_get_text(entry);
 
-            // Handle response
-            gint result = gtk_dialog_run(GTK_DIALOG(dialog));
-            if (result == GTK_RESPONSE_ACCEPT) {
-                const char* new_text = gtk_entry_get_text(GTK_ENTRY(entry));
+        guint year, month, day;
+        gtk_calendar_get_date(calendar, &year, &month, &day);
+        GDateTime* datetime = g_date_time_new_local(year, month + 1, day, 0, 0, 0);
+        gint64 new_date = g_date_time_to_unix(datetime) * 1000;
+        g_date_time_unref(datetime);
 
-                // Get new date
-                guint year, month, day;
-                gtk_calendar_get_date(GTK_CALENDAR(calendar), &year, &month, &day);
-                GDateTime* datetime = g_date_time_new_local(year, month + 1, day, 0, 0, 0);
-                gint64 new_date = g_date_time_to_unix(datetime) * 1000;
-                g_date_time_unref(datetime);
+        g_todos[index].text = new_text;
+        g_todos[index].date = new_date;
 
-                // Update todo
-                g_todos[index].text = new_text;
-                g_todos[index].date = new_date;
-
-                // Update UI
-                char date_str[64];
-                time_t new_unix_time = new_date / 1000;
-                strftime(date_str, sizeof(date_str), "%Y-%m-%d", localtime(&new_unix_time));
-
-                auto* label = gtk_label_new((g_todos[index].text + " - " + date_str).c_str());
-                auto* old_label = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(row))->data);
-                gtk_container_remove(GTK_CONTAINER(row), old_label);
-                gtk_container_add(GTK_CONTAINER(row), label);
-                gtk_widget_show_all(GTK_WIDGET(row));
-
-                // Notify about update using the helper function
-                notify_callback(g_todoUpdatedCallback, g_todos[index].toJson());
-            }
-
-            gtk_widget_destroy(dialog);
-        }
+        update_todo_row_label(row, g_todos[index]);
+        notify_callback(g_todoUpdatedCallback, g_todos[index].toJson());
     }
+
+    gtk_widget_destroy(dialog);
 }
 
 static void delete_action(GSimpleAction* action, GVariant* parameter, gpointer user_data) {
     auto* builder = static_cast<GtkBuilder*>(user_data);
     auto* list = GTK_LIST_BOX(gtk_builder_get_object(builder, "todo_list"));
     auto* row = gtk_list_box_get_selected_row(list);
-    if (row) {
-        int index = gtk_list_box_row_get_index(row);
-        if (index >= 0 && index < g_todos.size()) {
-            // Remove from UI
-            gtk_container_remove(GTK_CONTAINER(list), GTK_WIDGET(row));
+    if (!row) return;
 
-            // Notify about deletion
-            std::string json = g_todos[index].toJson();
+    gint index = gtk_list_box_row_get_index(row);
+    auto size = static_cast<gint>(g_todos.size());
+    if (index < 0 || index >= size) return;
 
-            // Remove from vector
-            g_todos.erase(g_todos.begin() + index);
-
-            notify_callback(g_todoDeletedCallback, json);
-        }
-    }
+    std::string json = g_todos[index].toJson();
+    gtk_container_remove(GTK_CONTAINER(list), GTK_WIDGET(row));
+    g_todos.erase(g_todos.begin() + index);
+    notify_callback(g_todoDeletedCallback, json);
 }
 
 static void on_add_clicked(GtkButton* button, gpointer user_data) {
@@ -171,30 +177,22 @@ static void on_add_clicked(GtkButton* button, gpointer user_data) {
         uuid_generate(todo.id);
         todo.text = text;
 
-        // Get date from calendar (GTK3 style)
         guint year, month, day;
         gtk_calendar_get_date(calendar, &year, &month, &day);
         GDateTime* datetime = g_date_time_new_local(year, month + 1, day, 0, 0, 0);
-        todo.date = g_date_time_to_unix(datetime) * 1000; // Convert to milliseconds
+        todo.date = g_date_time_to_unix(datetime) * 1000;
         g_date_time_unref(datetime);
 
         g_todos.push_back(todo);
 
-        // Create list item
-        char date_str[64];
-        time_t unix_time = todo.date / 1000;
-        strftime(date_str, sizeof(date_str), "%Y-%m-%d", localtime(&unix_time));
-
         auto* row = gtk_list_box_row_new();
-        auto* label = gtk_label_new((todo.text + " - " + date_str).c_str());
+        auto* label = gtk_label_new((todo.text + " - " + TodoItem::formatDate(todo.date)).c_str());
         gtk_container_add(GTK_CONTAINER(row), label);
         gtk_container_add(GTK_CONTAINER(list), row);
         gtk_widget_show_all(row);
 
-        // Clear entry
         gtk_entry_set_text(entry, "");
 
-        // Notify about addition using the helper function
         notify_callback(g_todoAddedCallback, todo.toJson());
     }
 }
@@ -211,13 +209,22 @@ static void on_row_activated(GtkListBox* list_box, GtkListBoxRow* row, gpointer 
     g_object_unref(menu);
 }
 
+static gboolean init_gtk_app(gpointer user_data) {
+    auto* app = static_cast<GtkApplication*>(user_data);
+    g_application_run(G_APPLICATION(app), 0, nullptr);
+    g_object_unref(app);
+    if (g_main_loop) {
+        g_main_loop_quit(g_main_loop);
+    }
+    return G_SOURCE_REMOVE;
+}
+
 static void activate_handler(GtkApplication* app, gpointer user_data) {
     auto* builder = gtk_builder_new();
 
-    // Add actions
     const GActionEntry app_actions[] = {
-        { "edit", edit_action, NULL, NULL, NULL },
-        { "delete", delete_action, NULL, NULL, NULL }
+        { "edit", edit_action, nullptr, nullptr, nullptr, {0, 0, 0} },
+        { "delete", delete_action, nullptr, nullptr, nullptr, {0, 0, 0} }
     };
     g_action_map_add_action_entries(G_ACTION_MAP(app), app_actions,
                                   G_N_ELEMENTS(app_actions), builder);
@@ -289,10 +296,62 @@ static void activate_handler(GtkApplication* app, gpointer user_data) {
 }
 
 void hello_gui() {
-    GtkApplication* app = gtk_application_new("com.example.todo", G_APPLICATION_DEFAULT_FLAGS);
-    g_signal_connect(app, "activate", G_CALLBACK(activate_handler), nullptr);
-    g_application_run(G_APPLICATION(app), 0, nullptr);
-    g_object_unref(app);
+    if (g_gtk_thread != nullptr) {
+        g_print("GTK application is already running.\n");
+        return;
+    }
+
+    if (!gtk_init_check(0, nullptr)) {
+        g_print("Failed to initialize GTK.\n");
+        return;
+    }
+
+    g_gtk_main_context = g_main_context_new();
+    g_main_loop = g_main_loop_new(g_gtk_main_context, FALSE);
+
+    g_gtk_thread = new std::thread([]() {
+        GtkApplication* app = gtk_application_new("com.example.todo", G_APPLICATION_NON_UNIQUE);
+        g_signal_connect(app, "activate", G_CALLBACK(activate_handler), nullptr);
+
+        g_idle_add_full(G_PRIORITY_DEFAULT, init_gtk_app, app, nullptr);
+
+        if (g_main_loop) {
+            g_main_loop_run(g_main_loop);
+        }
+    });
+
+    g_gtk_thread->detach();
+}
+
+void cleanup_gui() {
+    if (g_main_loop && g_main_loop_is_running(g_main_loop)) {
+        g_main_loop_quit(g_main_loop);
+    }
+
+    if (g_main_loop) {
+        g_main_loop_unref(g_main_loop);
+        g_main_loop = nullptr;
+    }
+
+    if (g_gtk_main_context) {
+        g_main_context_unref(g_gtk_main_context);
+        g_gtk_main_context = nullptr;
+    }
+
+    g_gtk_thread = nullptr;
+}
+
+void setTodoAddedCallback(TodoCallback callback) {
+    g_todoAddedCallback = callback;
+}
+
+void setTodoUpdatedCallback(TodoCallback callback) {
+    g_todoUpdatedCallback = callback;
+}
+
+void setTodoDeletedCallback(TodoCallback callback) {
+    g_todoDeletedCallback = callback;
 }
 
 } // namespace cpp_code
+

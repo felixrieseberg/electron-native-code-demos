@@ -17,11 +17,16 @@
           "cflags_cc!": ["-fno-exceptions"],
           "cflags": [
             "-fexceptions",
-            "<!@(pkg-config --cflags gtk+-3.0)"
+            "<!@(pkg-config --cflags gtk+-3.0)",
+            "-pthread"
           ],
           "cflags_cc": [
             "-fexceptions",
-            "<!@(pkg-config --cflags gtk+-3.0)"
+            "<!@(pkg-config --cflags gtk+-3.0)",
+            "-pthread"
+          ],
+          "ldflags": [
+            "-pthread"
           ],
           "defines": ["NODE_ADDON_API_CPP_EXCEPTIONS"],
           "libraries": [
