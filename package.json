@@ -6,7 +6,8 @@
   "workspaces": [
     "packages/swift",
     "packages/objective-c",
-    "packages/cpp-win32"
+    "packages/cpp-win32",
+    "packages/cpp-linux"
   ],
   "directories": {
     "test": "test"

@@ -1,0 +1,17 @@
+{
+  "name": "cpp-linux",
+  "version": "1.0.0",
+  "description": "A demo module that exposes C++ code to Electron",
+  "main": "js/index.js",
+  "author": "Felix Rieseberg <felix@felixrieseberg.com>",
+  "scripts": {
+    "clean": "rm -rf build",
+    "build-electron": "electron-rebuild",
+    "build": "node-gyp configure && node-gyp build"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "node-addon-api": "^8.3.0",
+    "bindings": "^1.5.0"
+  }
+}
