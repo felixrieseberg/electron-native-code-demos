@@ -9,9 +9,6 @@
     "packages/cpp-win32",
     "packages/cpp-linux"
   ],
-  "directories": {
-    "test": "test"
-  },
   "devDependencies": {
     "@electron/rebuild": "^3.7.1",
     "electron": "^34.0.0"
@@ -19,7 +16,7 @@
   "scripts": {
     "build": "npm run build --workspaces && npm run build-electron --workspaces",
     "clean": "npm run clean --workspaces",
-    "electron": "electron test/electron.js"
+    "electron": "electron harness/electron.js"
   },
   "author": "Felix Rieseberg <felix@felixrieseberg.com>",
   "license": "MIT"
