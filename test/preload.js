@@ -1,29 +1,28 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
+async function sendHelloWorld(language) {
+  const input = document.getElementById('hello-world-input').value || "";
+  const result = await ipcRenderer.invoke(`${language}-hello-world`, input);
+
+  document.getElementById('hello-world-result').value = result;
+}
+
 contextBridge.exposeInMainWorld('native', {
   swift: {
-    helloWorld: (input) => {
-      ipcRenderer.send('swift-hello-world', input);
-    },
-    helloGui: () => {
-      ipcRenderer.send('swift-hello-gui');
-    }
+    helloWorld: () => sendHelloWorld('swift'),
+    helloGui: () => ipcRenderer.send('swift-hello-gui'),
   },
   'objective-c': {
-    helloWorld: (input) => {
-      ipcRenderer.send('objective-c-hello-world', input);
-    },
-    helloGui: () => {
-      ipcRenderer.send('objective-c-hello-gui');
-    }
+    helloWorld: () => sendHelloWorld('objective-c'),
+    helloGui: () => ipcRenderer.send('objective-c-hello-gui'),
   },
   cppWin32: {
-    helloWorld: (input) => {
-      ipcRenderer.send('cpp-win32-hello-world', input);
-    },
-    helloGui: () => {
-      ipcRenderer.send('cpp-win32-hello-gui');
-    }
+    helloWorld: () => sendHelloWorld('cpp-win32'),
+    helloGui: () => ipcRenderer.send('cpp-win32-hello-gui'),
+  },
+  cppLinux: {
+    helloWorld: () => sendHelloWorld('cpp-linux'),
+    helloGui: () => ipcRenderer.send('cpp-linux-hello-gui'),
   },
   platform: process.platform
 });

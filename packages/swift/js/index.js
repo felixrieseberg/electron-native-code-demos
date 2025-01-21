@@ -25,7 +25,7 @@ class SwiftAddon extends EventEmitter {
     }
 
     helloWorld(input = "") {
-      this.addon.helloWorld(input);
+      return this.addon.helloWorld(input);
     }
 
     helloGui() {

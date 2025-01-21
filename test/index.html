@@ -15,37 +15,68 @@
         }
 
         button {
-            margin: 10px;
+            margin: 10px 0;
             padding: 5px 20px;
             font-size: 16px;
         }
 
+        h4 {
+            margin: 0;
+        }
+
         .native-buttons {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 50px;
         }
     </style>
 </head>
 
 <body>
     <div>
-        <h2>Show Native Windows</h2>
+        <h2>Call <span>helloGui()</span> Function</h2>
+        <p>This will show a native window using the <span>helloGui()</span> function in the native code. Choose a package below:</p>
         <div class="native-buttons">
             <div>
                 <h4>macOS</h4>
-                <button data-platform="darwin" onclick="native.swift.helloGui()">SwiftUI</button>
-                <button data-platform="darwin" onclick="native['objective-c'].helloGui()">Objective-C</button>
+                <button data-platform="darwin" onclick="native.swift.helloGui()">SwiftUI (Swift)</button>
+                <button data-platform="darwin" onclick="native['objective-c'].helloGui()">Cocoa (Objective-C)</button>
             </div>
             <div>
                 <h4>Windows</h4>
-                <button data-platform="win32" onclick="native.cppWin32.helloGui()">C++</button>
+                <button data-platform="win32" onclick="native.cppWin32.helloGui()">Win32 Common Controls (C++)</button>
             </div>
             <div>
                 <h4>Linux</h4>
-                <button data-platform="linux" onclick="native.cppLinux.helloGui()">C++</button>
+                <button data-platform="linux" onclick="native.cppLinux.helloGui()">GTK4 (C++)</button>
             </div>
         </div>
     </div>
+    <div>
+        <h2>Call <span>helloWorld()</span> Function</h2>
+        <p>This will call the <span>helloWorld()</span> function in the native code.</p>
+        <textarea id="hello-world-input" rows="2" cols="100" placeholder="Enter a message"></textarea>
+        <p>Choose to send to a package below:</p>
+        <div class="native-buttons">
+            <div>
+                <h4>macOS</h4>
+                <button data-platform="darwin" onclick="native.swift.helloWorld()">Swift</button>
+                <button data-platform="darwin" onclick="native['objective-c'].helloWorld()">Objective-C</button>
+            </div>
+            <div>
+                <h4>Windows</h4>
+                <button data-platform="win32" onclick="native.cppWin32.helloWorld()">C++</button>
+            </div>
+            <div>
+                <h4>Linux</h4>
+                <button data-platform="linux" onclick="native.cppLinux.helloWorld()">C++</button>
+            </div>
+        </div>
+        <div>
+            <h3>Result</h3>
+            <textarea id="hello-world-result" rows="5" cols="100" placeholder="Result will appear here" readonly></textarea>
+        </div>
+    </div>
 </body>
+
 </html>

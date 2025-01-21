@@ -7,6 +7,7 @@ const addons = {
   swift: process.platform === 'darwin' ? require('swift') : null,
   'objective-c': process.platform === 'darwin' ? require('objective-c') : null,
   'cpp-win32': process.platform === 'win32' ? require('cpp-win32') : null,
+  'cpp-linux': process.platform === 'linux' ? require('cpp-linux') : null,
 }
 
 function setupNativeListeners() {
@@ -14,12 +15,14 @@ function setupNativeListeners() {
     // Only handle the addons that are available for the current platform.
     if (!addons[language]) continue;
 
-    ipcMain.on(`${language}-hello-world`, (input) => {
-          console.log(`${language} hello world:`, addons[language].helloWorld(input));
+    ipcMain.handle(`${language}-hello-world`, (event, input) => {
+      const result = addons[language].helloWorld(input);
+      console.log(`${language} helloWorld() called:`, result);
+      return result;
     });
 
     ipcMain.on(`${language}-hello-gui`, () => {
-        addons[language].helloGui();
+      addons[language].helloGui();
     });
 
     // Setup the JavaScript listeners. This is simply a demo to

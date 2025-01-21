@@ -29,7 +29,7 @@ class CppLinuxAddon extends EventEmitter {
   }
 
   helloGui() {
-    this.addon.helloGui();
+    return this.addon.helloGui();
   }
 
   #parse(payload) {
