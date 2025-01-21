@@ -26,11 +26,15 @@
           "defines": ["NODE_ADDON_API_CPP_EXCEPTIONS"],
           "libraries": [
             "<!@(pkg-config --libs gtk4)",
-            "-luuid"
+            "-luuid",
+            "-lvulkan"
           ],
           "dependencies": [
             "<!(node -p \"require('node-addon-api').gyp\")"
-          ]
+          ],
+          "xcode_settings": {
+            "GCC_ENABLE_CPP_EXCEPTIONS": "YES"
+          }
         }]
       ]
     }
