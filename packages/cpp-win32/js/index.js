@@ -8,7 +8,7 @@ class CppWin32Addon extends EventEmitter {
       throw new Error('This module is only available on Windows');
     }
 
-    const native = require('../build/Release/cpp_addon');
+    const native = require('bindings')('cpp_addon');
     this.addon = new native.CppWin32Addon();
 
     this.addon.on('todoAdded', (payload) => {

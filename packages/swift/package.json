@@ -11,6 +11,7 @@
   },
   "license": "MIT",
   "dependencies": {
+    "bindings": "^1.5.0",
     "node-addon-api": "^8.3.0"
   }
 }

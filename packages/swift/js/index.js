@@ -7,8 +7,8 @@ class SwiftAddon extends EventEmitter {
         if (process.platform !== 'darwin') {
           throw new Error('This module is only available on macOS');
         }
-  
-        const native = require('../build/Release/swift_addon');
+
+        const native = require('bindings')('swift_addon');
         this.addon = new native.SwiftAddon();
 
         this.addon.on('todoAdded', (payload) => {

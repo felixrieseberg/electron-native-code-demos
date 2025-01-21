@@ -5,12 +5,13 @@
   "main": "js/index.js",
   "author": "Felix Rieseberg <felix@felixrieseberg.com>",
   "scripts": {
-    "clean": "rm -rf build_swift && rm -rf build",
+    "clean": "rm -rf build",
     "build-electron": "electron-rebuild",
     "build": "node-gyp configure && node-gyp build"
   },
   "license": "MIT",
   "dependencies": {
+    "bindings": "^1.5.0",
     "node-addon-api": "^8.3.0"
   }
 }

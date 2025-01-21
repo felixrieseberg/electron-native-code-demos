@@ -8,7 +8,7 @@ class ObjectiveCAddon extends EventEmitter {
           throw new Error('This module is only available on macOS');
         }
 
-        const native = require('../build/Release/objectivec_addon');
+        const native = require('bindings')('objectivec_addon');
         this.addon = new native.ObjectiveCAddon();
 
         this.addon.on('todoAdded', (payload) => {
